@@ -188,5 +188,64 @@ public function updateUserinfoAll()
         return response()->json($result);
     }
 
-    
+public function getTotalUsers()
+{
+    try {
+        $total = $this->google->getTotalUsers(); // assuming this returns an integer
+
+        return response()->json([
+            'success' => true,
+            'total_users' => $total
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error_code' => 500,
+            'message' => 'Unable to fetch total users: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function getTotalUsersBySession(Request $request, $session)
+{
+    try {
+        $total = $this->google->getTotalUsersBySession($session);
+
+        return response()->json([
+            'success' => true,
+            'session' => $session,
+            'total_users' => $total
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error_code' => 500,
+            'message' => 'Unable to fetch total users by session: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function getTotalUsersByProgramme(Request $request, $programme)
+{
+    try {
+        $total = $this->google->getTotalUsersByProgramme($programme);
+
+        return response()->json([
+            'success' => true,
+            'programme' => $programme,
+            'total_users' => $total
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error_code' => 500,
+            'message' => 'Unable to fetch total users by programme: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
 }

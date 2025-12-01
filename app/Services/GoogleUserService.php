@@ -555,5 +555,33 @@ public function deleteGoogleUser($email)
     }
 }
 
+public function getTotalUsers(): int
+{
+    $usersList = $this->service->users->listUsers(['customer' => 'my_customer']);
+    return count($usersList->getUsers());
+}
+
+public function getTotalUsersBySession(string $session): int
+{
+    // query custom field 'session'
+    $query = "externalId.type:custom externalId.customType:session externalId.value:{$session}";
+    $usersList = $this->service->users->listUsers([
+        'customer' => 'my_customer',
+        'query' => $query
+    ]);
+
+    return count($usersList->getUsers());
+}
+
+public function getTotalUsersByProgramme(string $programme): int
+{
+    $query = "externalId.type:custom externalId.customType:programme externalId.value:{$programme}";
+    $usersList = $this->service->users->listUsers([
+        'customer' => 'my_customer',
+        'query' => $query
+    ]);
+
+    return count($usersList->getUsers());
+}
 
 }

@@ -22,6 +22,9 @@ Route::middleware('secure.api')->prefix('email')->group(function () {
     Route::post('/update-info', [EmailApiController::class, 'updateUserinfo']);  
     Route::post('/delete-user', [EmailApiController::class, 'deleteGoogleAccount']);  
     Route::get('/updateUserinfoAll', [EmailApiController::class, 'updateUserinfoAll']);  
+    Route::get('/total-users', [EmailApiController::class, 'getTotalUsers']);  
+    Route::get('/users-session', [EmailApiController::class, 'getTotalUsersBySession']);  
+    Route::get('/users-programme', [EmailApiController::class, 'getTotalUsersByProgramme']);  
     
     
 });

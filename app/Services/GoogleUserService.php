@@ -6,7 +6,7 @@ use Google\Client;
 use Google\Service\Directory;
 use Google\Service\Exception as GoogleServiceException;
 use Google\Service\Directory\User;
-
+use Illuminate\Support\Facades\DB;
 class GoogleUserService
 {
     protected Directory $service;
@@ -54,7 +54,7 @@ class GoogleUserService
         return str_shuffle($pwd);
     }
 
-public function createUser(array $data): array
+public function createUser(array $data, string $clientIp, ?string $originDomain = null): array
 {
     try {
         // Required fields
@@ -66,7 +66,7 @@ public function createUser(array $data): array
         $matricno  = $data['matricno'] ?? null;
         $programme = $data['programme'] ?? null;
         $session   = $data['session'] ?? null;
-        
+      
         //Log payload
            if (!$firstname || !$lastname || !$domain) {
             return [
@@ -155,19 +155,20 @@ public function createUser(array $data): array
             ],
             'password' => $password,
             'changePasswordAtNextLogin' => true,
-            'hashFunction' => 'crypt',
+            //'hashFunction' => 'crypt',
             'externalIds' => $externalIds
         ]);
 
         // STEP 6: Insert user in Google Workspace
         $response = $this->service->users->insert($user);
-        $this->insertEmailInfo($domain, $firstname, $lastname, $othername, $finalEmail, $password, $matricno,$matric,$session,$programme);
-
-        $this->insertEmailLogger($data,$response);
+      
+        $ip = request()->ip();
+        $this->insertEmailInfo($domain, $firstname, $lastname, $othername, $finalEmail, $password, $matricno,$matricno,$session,$programme,$originDomain,$clientIp);
+        $this->insertEmailLogger($data,$response,$originDomain,$clientIp);
         return [
             'success' => true,
             'message' => 'User created successfully',
-            'email' => $finalEmail,
+            'primaryEmail' => $finalEmail,
             'password' => $password
         ];
 
@@ -194,7 +195,7 @@ public function resetPassword(string $email, string $password): array
         $user->setChangePasswordAtNextLogin(true);
         //$user->setHashFunction('crypt');
         $this->service->users->update($email, $user);
-
+        //$this->insertEmailLogger($data,$response,$originDomain,$clientIp);
         return [
             'success' => true,
             'message' => 'Password reset successfully',
@@ -496,7 +497,7 @@ public function addMatricnoToUser(string $email, string $matricno, string $progr
     }
 }
 
-public function insertEmailInfo($domain, $firstname, $lastname, $othername, $email, $password, $userid,$matric,$session,$programme)
+public function insertEmailInfo($domain, $firstname, $lastname, $othername, $email, $password, $userid,$matric,$session,$programme,$server_ip,$client_ip)
 {
     return DB::table('email_info')->insertGetId([
         'domain'     => $domain,
@@ -510,15 +511,28 @@ public function insertEmailInfo($domain, $firstname, $lastname, $othername, $ema
         'created_at' => now(),
         'matric'  =>$matric,
         'session'=>$session,
-        'programme'=>$programme
+        'programme'=>$programme,
+        'server_ip'   => $server_ip,
+        'client_ip'   => $client_ip,
     ]);
 }
 
-public function insertEmailLogger($payload, $response)
+public function insertEmailLogger($payload, $response, $server_ip, $client_ip)
 {
+    // Convert object to JSON safely
+    if (is_object($payload) || is_array($payload)) {
+        $payload = json_encode($payload, JSON_PRETTY_PRINT);
+    }
+
+    if (is_object($response) || is_array($response)) {
+        $response = json_encode($response, JSON_PRETTY_PRINT);
+    }
+
     return DB::table('email_logger')->insertGetId([
         'payload'    => $payload,
         'response'   => $response,
+        'server_ip'  => $server_ip,
+        'client_ip'  => $client_ip,
         'created_at' => now(),
     ]);
 }
@@ -555,33 +569,5 @@ public function deleteGoogleUser($email)
     }
 }
 
-public function getTotalUsers(): int
-{
-    $usersList = $this->service->users->listUsers(['customer' => 'my_customer']);
-    return count($usersList->getUsers());
-}
-
-public function getTotalUsersBySession(string $session): int
-{
-    // query custom field 'session'
-    $query = "externalId.type:custom externalId.customType:session externalId.value:{$session}";
-    $usersList = $this->service->users->listUsers([
-        'customer' => 'my_customer',
-        'query' => $query
-    ]);
-
-    return count($usersList->getUsers());
-}
-
-public function getTotalUsersByProgramme(string $programme): int
-{
-    $query = "externalId.type:custom externalId.customType:programme externalId.value:{$programme}";
-    $usersList = $this->service->users->listUsers([
-        'customer' => 'my_customer',
-        'query' => $query
-    ]);
-
-    return count($usersList->getUsers());
-}
 
 }

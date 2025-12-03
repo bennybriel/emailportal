@@ -130,14 +130,15 @@ public function updateUserinfoAll()
     // Fetch only 20 users to process
     $users = DB::table('users')
         ->where('isupdated', 0)
-        ->where('activesession', '2024/2025')
+        ->where('activesession', '2025/2026')
         ->where('apptype', 'UGD')
+        ->where('isemail', 1)
         ->whereNotNull('schoolemail')
         ->whereNotNull('matric')
-        ->orderBy('id')
-        ->limit(1000)
+       
+        ->limit(300)
         ->get();
-    //dd($users);
+  
     foreach ($users as $item) {
         try {
             // Update Google account
@@ -150,7 +151,7 @@ public function updateUserinfoAll()
 
             // Mark as updated
             DB::table('users')
-                ->where('id', $item->id)
+                ->where('matric', $item->matric)
                 ->update(['isupdated' => 1]);
 
         } catch (\Exception $e) {
@@ -188,64 +189,5 @@ public function updateUserinfoAll()
         return response()->json($result);
     }
 
-public function getTotalUsers()
-{
-    try {
-        $total = $this->google->getTotalUsers(); // assuming this returns an integer
-
-        return response()->json([
-            'success' => true,
-            'total_users' => $total
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error_code' => 500,
-            'message' => 'Unable to fetch total users: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-public function getTotalUsersBySession(Request $request, $session)
-{
-    try {
-        $total = $this->google->getTotalUsersBySession($session);
-
-        return response()->json([
-            'success' => true,
-            'session' => $session,
-            'total_users' => $total
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error_code' => 500,
-            'message' => 'Unable to fetch total users by session: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-public function getTotalUsersByProgramme(Request $request, $programme)
-{
-    try {
-        $total = $this->google->getTotalUsersByProgramme($programme);
-
-        return response()->json([
-            'success' => true,
-            'programme' => $programme,
-            'total_users' => $total
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error_code' => 500,
-            'message' => 'Unable to fetch total users by programme: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-
+    
 }
